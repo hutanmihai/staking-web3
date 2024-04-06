@@ -1,0 +1,8 @@
+# .eslintignore
+build/*
+dist/*
+public/*
+**/node_modules/*
+
+**/.next/*
+next.config.js
