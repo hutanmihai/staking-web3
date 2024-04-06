@@ -1,3 +1,5 @@
+'use client'
+
 import WalletBalance from '@/components/wallet-balance'
 
 function Home() {
