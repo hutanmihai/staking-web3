@@ -16,6 +16,13 @@ const config: HardhatUserConfig = {
       chainId: 1337,
     },
   },
+  defaultNetwork: "hardhat",
+  etherscan: {
+    apiKey: "AFFI594FSINK9SXR6933PKHA1UVHU67IQ5",
+  },
+  sourcify: {
+    enabled: true,
+  },
 };
 
 export default config;

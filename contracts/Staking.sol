@@ -1,11 +1,13 @@
 // SPDX-License-Identifier: UNLICENSED
 pragma solidity ^0.8.0;
 
+import "hardhat/console.sol";
+
 contract Staking {
     address public owner;
 
     struct Position {
-        uint poisitonId;
+        uint positionId;
         address walletAddress;
         uint createdDate;
         uint unlockDate;
@@ -15,17 +17,19 @@ contract Staking {
         bool open;
     }
 
-    Position position;
-
-    uint public currentPosisitonId;
+    uint public currentPositionId;
     mapping(uint => Position) public positions;
     mapping(address => uint[]) public positionIdsByAddress;
     mapping(uint => uint) public tiers;
     uint[] public lockPeriods;
 
+    // Event declarations
+    event Staked(address indexed staker, uint positionId, uint weiAmount, uint interestRate, uint unlockDate);
+    event Closed(address indexed staker, uint positionId, uint returnedAmount);
+
     constructor() payable {
         owner = msg.sender;
-        currentPosisitonId = 0;
+        currentPositionId = 0;
 
         lockPeriods = [0 days, 30 days, 60 days, 90 days];
 
@@ -38,35 +42,29 @@ contract Staking {
     function stakeEther(uint numDays) external payable {
         require(tiers[numDays] > 0, "Invalid number of days");
 
-        positions[currentPosisitonId] = Position(
-            currentPosisitonId,
+        uint unlockDate = block.timestamp + numDays * 1 days;
+        uint interest = calculateInterest(msg.value, tiers[numDays]);
+
+        positions[currentPositionId] = Position(
+            currentPositionId,
             msg.sender,
             block.timestamp,
-            block.timestamp + numDays * 1 days,
+            unlockDate,
             tiers[numDays],
             msg.value,
-            calculateInterest(msg.value, tiers[numDays]),
+            interest,
             true
         );
 
-        positionIdsByAddress[msg.sender].push(currentPosisitonId);
-        currentPosisitonId++;
+        positionIdsByAddress[msg.sender].push(currentPositionId);
+
+        emit Staked(msg.sender, currentPositionId, msg.value, tiers[numDays], unlockDate);
+
+        currentPositionId++;
     }
 
-    function calculateInterest(uint basisPoints, uint weiAmount) private pure returns (uint) {
-        return (basisPoints * weiAmount) / 10000;
-    }
-
-    function getLockPerios() external view returns (uint[] memory) {
-        return lockPeriods;
-    }
-
-    function getInterestRate(uint numDays) external view returns (uint) {
-        return tiers[numDays];
-    }
-
-    function getPositionIdsByAddress(address walletAddress) external view returns (uint[] memory) {
-        return positionIdsByAddress[walletAddress];
+    function calculateInterest(uint weiAmount, uint basisPoints) private pure returns (uint) {
+        return (weiAmount * basisPoints) / 10000;
     }
 
     function closePosition(uint positionId) external {
@@ -76,6 +74,22 @@ contract Staking {
 
         positions[positionId].open = false;
         uint amount = positions[positionId].weiStaked + positions[positionId].weiInterest;
+
+        emit Closed(msg.sender, positionId, amount);
+
         payable(msg.sender).transfer(amount);
+    }
+
+    function getLockPeriods() external view returns (uint[] memory) {
+        return lockPeriods;
+    }
+
+    function getInterestRate(uint numDays) external view returns (uint) {
+        return tiers[numDays];
+    }
+
+    function getPositionIdsByAddress(address walletAddress) external view returns (uint[] memory) {
+        console.log("Wallet address: %s", walletAddress);
+        return positionIdsByAddress[walletAddress];
     }
 }

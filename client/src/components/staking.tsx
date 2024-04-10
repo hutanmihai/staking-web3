@@ -1,87 +1,136 @@
 'use client'
 
-import { ethers } from 'ethers'
-import { useState } from 'react'
-import {
-  useAccount,
-  useBalance,
-  useClient,
-  useConnectorClient,
-  useReadContract,
-  useWriteContract,
-} from 'wagmi'
+import { Button } from '@/components/ui/button'
+import { Card, CardContent, CardHeader } from '@/components/ui/card'
+import { Input } from '@/components/ui/input'
+import { toWei } from '@/utils'
+import { useEffect, useState } from 'react'
+import { useAccount, useReadContract, useReadContracts, useWriteContract } from 'wagmi'
+import { CONTRACT_ADDRESS, ABI } from '@/config'
 
 function Staking() {
-  const { isConnected, address } = useAccount()
-  const account = useAccount()
-  const provider = useClient()
-  const signer = useConnectorClient()
-  const balance = useBalance(account)
+  const { address, status, addresses, chainId, chain } = useAccount()
 
-  const [stakingTab, setStakingTab] = useState(true)
-  const [unstakingTab, setUnstakingTab] = useState(false)
+  const [isStakeTabOpen, setIsStakeTabOpen] = useState(true)
   const [unstakeValue, setUnstakeValue] = useState(0)
 
-  const [assetIds, setAssetIds] = useState([])
+  const [assetIds, setAssetIds] = useState<any[]>([])
   const [assets, setAssets] = useState([])
-  const [amount, setAmount] = useState(0)
-
-  const toEther = (ether: any) => ethers.parseEther(ether)
-  const fromWei = (wei: any) => ethers.formatEther(wei)
+  const [amount, setAmount] = useState<number>(0)
 
   const { writeContract } = useWriteContract()
-  const { data: contract } = useReadContract()
 
-  const switchToUnstake = async () => {
-    if (!unstakingTab) {
-      setStakingTab(false)
-      setUnstakingTab(true)
-      const assetIds = await getAssetIds(address, signer)
-      setAssetIds(assetIds)
-      getAssets(assetIds, signer)
+  const { data: assetsIds, refetch } = useReadContract({
+    abi: ABI,
+    address: CONTRACT_ADDRESS,
+    functionName: 'getPositionIdsByAddress',
+    args: [address!],
+    query: {
+      enabled: !!address,
+    },
+  })
+
+  useEffect(() => {
+    refetch()
+    if (assetsIds) {
+      setAssetIds(assetsIds)
     }
+    console.log('assetsIds', assetsIds)
+  }, [address, assetsIds])
+
+  const toggleStakeTab = () => {
+    setIsStakeTabOpen((prev) => !prev)
   }
 
-  const getAssetIds = async (address: any, signer: any) => {
-    const assetIds = await contract.getPositionIdsForAddress(address)
-    return assetIds
-  }
+  const contractConfig = assetIds.map((id) => ({
+    addressOrName: CONTRACT_ADDRESS,
+    contractInterface: ABI,
+    functionName: 'getPositionById',
+    args: [id],
+    query: {
+      enabled: !!assetIds,
+    },
+  }))
 
-  const calcDaysRemaining = async (unlockDate: any) => {
-    const timeNow = Date.now() / 1000
-    const secondsRemaining = unlockDate - timeNow
-    return Math.max(Number((secondsRemaining / 60 / 60 / 24).toFixed(0)), 0)
-  }
+  const { data: contracts } = useReadContracts({
+    contracts: contractConfig,
+    query: {
+      enabled: !!assetIds,
+    },
+  })
 
-  const getAssets = async (assetIds: any) => {
-    const queriedAssets = await Promise.all(assets.map((id: any) => contract.getPositionById(id)))
-    queriedAssets.map(async (asset: any) => {
-      const parsedAsset = {
-        positionId: asset.positionId,
-        percentInterest: Number(asset.percentInterest) / 100,
-        daysRemaining: await calcDaysRemaining(asset.unlockDate),
-        etherInterest: toEther(asset.weiInterest),
-        etherStaked: toEther(asset.weiStaked),
-        open: asset.open,
-      }
+  useEffect(() => {
+    if (contracts) {
+      setAssets(contracts)
+    }
+    console.log('contracts', contracts)
+  }, [contracts, assetsIds])
 
-      setAssets((prev: any) => [...prev, parsedAsset])
+  const stakeEther = (stakingLength: number) => {
+    const wei = toWei(amount.toString())
+    writeContract({
+      address: CONTRACT_ADDRESS,
+      functionName: 'stakeEther',
+      args: [BigInt(stakingLength)],
+      abi: ABI,
+      value: wei,
     })
   }
 
-  const stakeEther = async (stakingLength: any) => {
-    const wei = toWei(amount)
-    const data = { value: wei }
-    await contract.stakeEther(stakingLength, data)
-  }
-
-  const withDraw = async (positionId: any) => {
-    contract.closePosition(positionId)
+  const withDraw = (positionId: string) => {
+    writeContract({
+      address: CONTRACT_ADDRESS,
+      functionName: 'closePosition',
+      args: [BigInt(positionId)],
+      abi: ABI,
+    })
   }
 
   return (
     <div>
-      <h1>Staking</h1>
+      <h1>
+        Status: {status}
+        <br />
+        Addresses: {JSON.stringify(addresses)}
+        <br />
+        Chain: {JSON.stringify(chain)}
+        <br />
+        chainId: {chainId}
+      </h1>
+      {isStakeTabOpen ? (
+        <Card className="bg-black">
+          <CardHeader>
+            <Button onClick={toggleStakeTab} variant="secondary">
+              {isStakeTabOpen ? 'Unstake' : 'Stake'}
+            </Button>
+          </CardHeader>
+          <CardContent>
+            <Input
+              onChange={(e) => setAmount(Number(e.target.value))}
+              maxLength={120}
+              type="number"
+              placeholder="Amount to stake"
+              required
+            />
+            <Button className="mt-2 w-full" onClick={() => stakeEther(0)}>
+              Stake
+            </Button>
+          </CardContent>
+        </Card>
+      ) : (
+        <Card className="bg-black">
+          <CardHeader>
+            <Button onClick={toggleStakeTab} variant="secondary">
+              {isStakeTabOpen ? 'Unstake' : 'Stake'}
+            </Button>
+          </CardHeader>
+          <CardContent>
+            <Button className="mt-2 w-full" onClick={() => console.log('Unstake Clicked!')}>
+              Unstake
+            </Button>
+          </CardContent>
+        </Card>
+      )}
     </div>
   )
 }
