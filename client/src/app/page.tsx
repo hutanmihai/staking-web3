@@ -2,6 +2,7 @@
 
 import AccountDetails from '@/components/account-details'
 import MaxWidthWrapper from '@/components/max-width-wrapper'
+import Positions from '@/components/positions'
 import Staking from '@/components/staking'
 import { Card } from '@/components/ui/card'
 
@@ -18,9 +19,7 @@ export default function RootPage() {
           </section>
         </div>
         <div className="row-span-1">
-          <Card className="h-max bg-black text-center">
-            <p>TODO</p>
-          </Card>
+          <Positions />
         </div>
       </div>
     </MaxWidthWrapper>

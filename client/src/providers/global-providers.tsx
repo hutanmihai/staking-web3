@@ -1,5 +1,6 @@
 'use client'
 
+import { Toaster } from '@/components/ui/toaster'
 import { wagmiConfig } from '@/wagmi-config'
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import { ReactNode } from 'react'
@@ -14,7 +15,10 @@ type TGlobalProvidersProps = {
 function GlobalProviders({ children }: TGlobalProvidersProps) {
   return (
     <WagmiProvider config={wagmiConfig}>
-      <QueryClientProvider client={queryClient}>{children}</QueryClientProvider>
+      <QueryClientProvider client={queryClient}>
+        {children}
+        <Toaster />
+      </QueryClientProvider>
     </WagmiProvider>
   )
 }
