@@ -6,19 +6,53 @@ import { Input } from '@/components/ui/input'
 import { useToast } from '@/components/ui/use-toast'
 import { ethers } from 'ethers'
 import { useState } from 'react'
-import { useWriteContract } from 'wagmi'
+import { useWatchContractEvent, useWriteContract } from 'wagmi'
 import { CONTRACT_ADDRESS, ABI } from '@/config'
 
 function Staking() {
   const [withdrawPositionId, setWithdrawPositionId] = useState<number | null>(null)
   const [amount, setAmount] = useState<number>(0)
   const { toast } = useToast()
-  const { writeContractAsync, error: writeContractError, isError } = useWriteContract()
+  const { writeContractAsync } = useWriteContract()
+  const [listenedBlockNumbers, setListenedBlockNumbers] = useState<number[]>([])
+
+  useWatchContractEvent({
+    address: CONTRACT_ADDRESS,
+    abi: ABI,
+    eventName: 'Staked',
+    onLogs: (logs) => {
+      if (!listenedBlockNumbers.includes(Number(logs[0].blockNumber))) {
+        const blockNumber = Number(logs[0].blockNumber)
+        setListenedBlockNumbers([...listenedBlockNumbers, blockNumber])
+        toast({
+          title: 'Success',
+          description: 'Staked successfully',
+          variant: 'default',
+        })
+      }
+    },
+  })
+
+  useWatchContractEvent({
+    address: CONTRACT_ADDRESS,
+    abi: ABI,
+    eventName: 'Closed',
+    onLogs: (logs) => {
+      if (!listenedBlockNumbers.includes(Number(logs[0].blockNumber))) {
+        const blockNumber = Number(logs[0].blockNumber)
+        setListenedBlockNumbers([...listenedBlockNumbers, blockNumber])
+        toast({
+          title: 'Success',
+          description: 'Closed successfully',
+          variant: 'default',
+        })
+      }
+    },
+  })
 
   const stakeEther = async (stakingLength: number) => {
     const wei = ethers.parseEther(amount.toString())
     const stakingLengthBigInt = BigInt(stakingLength)
-    console.log('wei', wei)
     await writeContractAsync(
       {
         address: CONTRACT_ADDRESS,
@@ -63,17 +97,6 @@ function Staking() {
     )
   }
 
-  // useEffect(() => {
-  //   console.log('writeContractError', writeContractError)
-  //   if (isError) {
-  //     toast({
-  //       title: 'Error',
-  //       description: writeContractError.message,
-  //       variant: 'destructive',
-  //     })
-  //   }
-  // }, [writeContractError, writeContractAsync])
-
   return (
     <Card className="h-max bg-black text-center">
       <CardHeader>Staking</CardHeader>
@@ -85,9 +108,17 @@ function Staking() {
           placeholder="Amount to stake"
           required
         />
-        <Button className="mt-2 w-full" onClick={() => stakeEther(60)}>
-          Stake
-        </Button>
+        <div className="flex justify-between">
+          <Button className="mt-2 w-full" onClick={() => stakeEther(60)}>
+            1 minute 60%
+          </Button>
+          <Button className="mx-2 mt-2 w-full" onClick={() => stakeEther(120)}>
+            2 minutes 70%
+          </Button>
+          <Button className="mt-2 w-full" onClick={() => stakeEther(180)}>
+            3 minutes 80%
+          </Button>
+        </div>
         <Input
           className="mt-5"
           onChange={(e) => setWithdrawPositionId(Number(e.target.value))}

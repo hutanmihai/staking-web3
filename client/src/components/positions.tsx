@@ -60,12 +60,6 @@ function Positions() {
     setPositions(_positions)
   }, [data])
 
-  useEffect(() => {
-    console.log('positionsIds', positionsIds)
-    console.log('positions', positions)
-    console.log('data', data)
-  }, [positions])
-
   return (
     <Card className="h-max bg-black text-center">
       <CardHeader>Positions</CardHeader>
