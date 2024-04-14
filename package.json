@@ -1,5 +1,10 @@
 {
   "name": "hardhat-project",
+  "scripts": {
+    "deploy": "npx hardhat ignition deploy ./ignition/modules/Staking.ts --network localhost && npx hardhat ignition deploy ./ignition/modules/Yeezy.ts --network localhost && npx hardhat ignition deploy ./ignition/modules/RewardPool.ts --network localhost",
+    "test": "npx hardhat test",
+    "compile": "npx hardhat compile"
+  },
   "devDependencies": {
     "@nomicfoundation/hardhat-toolbox": "^5.0.0",
     "@openzeppelin/contracts": "^5.0.2",
