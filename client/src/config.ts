@@ -31,32 +31,6 @@ export const ABI = [
     type: 'event',
   },
   {
-    inputs: [
-      {
-        internalType: 'uint256',
-        name: 'positionId',
-        type: 'uint256',
-      },
-    ],
-    name: 'closePosition',
-    outputs: [],
-    stateMutability: 'nonpayable',
-    type: 'function',
-  },
-  {
-    inputs: [
-      {
-        internalType: 'address payable',
-        name: '_rewardPool',
-        type: 'address',
-      },
-    ],
-    name: 'setRewardPool',
-    outputs: [],
-    stateMutability: 'nonpayable',
-    type: 'function',
-  },
-  {
     anonymous: false,
     inputs: [
       {
@@ -97,13 +71,13 @@ export const ABI = [
     inputs: [
       {
         internalType: 'uint256',
-        name: 'numSeconds',
+        name: 'positionId',
         type: 'uint256',
       },
     ],
-    name: 'stakeEther',
+    name: 'closePosition',
     outputs: [],
-    stateMutability: 'payable',
+    stateMutability: 'nonpayable',
     type: 'function',
   },
   {
@@ -236,6 +210,32 @@ export const ABI = [
       },
     ],
     stateMutability: 'view',
+    type: 'function',
+  },
+  {
+    inputs: [
+      {
+        internalType: 'address payable',
+        name: '_rewardPool',
+        type: 'address',
+      },
+    ],
+    name: 'setRewardPool',
+    outputs: [],
+    stateMutability: 'nonpayable',
+    type: 'function',
+  },
+  {
+    inputs: [
+      {
+        internalType: 'uint256',
+        name: 'numSeconds',
+        type: 'uint256',
+      },
+    ],
+    name: 'stakeEther',
+    outputs: [],
+    stateMutability: 'payable',
     type: 'function',
   },
 ] as const

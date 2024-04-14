@@ -3,7 +3,7 @@
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardHeader } from '@/components/ui/card'
 import { Input } from '@/components/ui/input'
-import { toWei } from '@/utils'
+import { ethers } from 'ethers'
 import { useEffect, useState } from 'react'
 import { useAccount, useReadContract, useReadContracts, useWriteContract } from 'wagmi'
 import { CONTRACT_ADDRESS, ABI } from '@/config'
@@ -11,9 +11,10 @@ import { CONTRACT_ADDRESS, ABI } from '@/config'
 function Staking() {
   const { address } = useAccount()
 
+  const [withdrawPositionId, setWithdrawPositionId] = useState<number | null>(null)
   const [positions, setPositions] = useState<any[]>([])
   const [amount, setAmount] = useState<number>(0)
-  const { writeContractAsync } = useWriteContract()
+  const { writeContractAsync, isPending: isWriteContractPending } = useWriteContract()
 
   const { data: positionsIds, isSuccess: positionsIdsFetched } = useReadContract({
     abi: ABI,
@@ -38,7 +39,7 @@ function Staking() {
     // @ts-ignore
     contracts: contractsConfig,
     query: {
-      enabled: positionsIdsFetched && contractsConfig.length > 0,
+      enabled: contractsConfig.length > 0,
     },
   })
 
@@ -58,24 +59,25 @@ function Staking() {
   }, [data])
 
   const stakeEther = async (stakingLength: number) => {
-    const wei = toWei(amount.toString())
+    const wei = ethers.parseEther(amount.toString())
+    const stakingLengthBigInt = BigInt(stakingLength)
     console.log('wei', wei)
-    console.log('stakingLength', stakingLength.toString())
     await writeContractAsync({
       address: CONTRACT_ADDRESS,
       functionName: 'stakeEther',
-      // @ts-ignore
-      args: [stakingLength.toString()],
+      args: [stakingLengthBigInt],
       abi: ABI,
       value: wei,
     })
   }
 
-  const withDraw = async (id: bigint) => {
+  const withDraw = async (id: number | null) => {
+    if (id === null) return
+    const idBigInt = BigInt(id)
     await writeContractAsync({
       address: CONTRACT_ADDRESS,
       functionName: 'closePosition',
-      args: [id],
+      args: [idBigInt],
       abi: ABI,
     })
   }
@@ -99,6 +101,17 @@ function Staking() {
         />
         <Button className="mt-2 w-full" onClick={() => stakeEther(60)}>
           Stake
+        </Button>
+        <Input
+          className="mt-5"
+          onChange={(e) => setWithdrawPositionId(Number(e.target.value))}
+          maxLength={120}
+          type="number"
+          placeholder="Position ID to withdraw"
+          required
+        />
+        <Button className="mt-2 w-full" onClick={() => withDraw(withdrawPositionId)}>
+          Withdraw
         </Button>
       </CardContent>
     </Card>
