@@ -31,6 +31,32 @@ export const ABI = [
     type: 'event',
   },
   {
+    inputs: [
+      {
+        internalType: 'uint256',
+        name: 'positionId',
+        type: 'uint256',
+      },
+    ],
+    name: 'closePosition',
+    outputs: [],
+    stateMutability: 'nonpayable',
+    type: 'function',
+  },
+  {
+    inputs: [
+      {
+        internalType: 'address payable',
+        name: '_rewardPool',
+        type: 'address',
+      },
+    ],
+    name: 'setRewardPool',
+    outputs: [],
+    stateMutability: 'nonpayable',
+    type: 'function',
+  },
+  {
     anonymous: false,
     inputs: [
       {
@@ -71,37 +97,18 @@ export const ABI = [
     inputs: [
       {
         internalType: 'uint256',
-        name: 'positionId',
+        name: 'numSeconds',
         type: 'uint256',
       },
     ],
-    name: 'closePosition',
+    name: 'stakeEther',
     outputs: [],
-    stateMutability: 'nonpayable',
+    stateMutability: 'payable',
     type: 'function',
   },
   {
     inputs: [],
     name: 'currentPositionId',
-    outputs: [
-      {
-        internalType: 'uint256',
-        name: '',
-        type: 'uint256',
-      },
-    ],
-    stateMutability: 'view',
-    type: 'function',
-  },
-  {
-    inputs: [
-      {
-        internalType: 'uint256',
-        name: 'numDays',
-        type: 'uint256',
-      },
-    ],
-    name: 'getInterestRate',
     outputs: [
       {
         internalType: 'uint256',
@@ -128,17 +135,59 @@ export const ABI = [
   {
     inputs: [
       {
-        internalType: 'address',
-        name: 'walletAddress',
-        type: 'address',
+        internalType: 'uint256',
+        name: 'positionId',
+        type: 'uint256',
       },
     ],
-    name: 'getPositionIdsByAddress',
+    name: 'getPositionById',
     outputs: [
       {
-        internalType: 'uint256[]',
+        components: [
+          {
+            internalType: 'uint256',
+            name: 'positionId',
+            type: 'uint256',
+          },
+          {
+            internalType: 'address',
+            name: 'walletAddress',
+            type: 'address',
+          },
+          {
+            internalType: 'uint256',
+            name: 'createdDate',
+            type: 'uint256',
+          },
+          {
+            internalType: 'uint256',
+            name: 'unlockDate',
+            type: 'uint256',
+          },
+          {
+            internalType: 'uint256',
+            name: 'percentInterest',
+            type: 'uint256',
+          },
+          {
+            internalType: 'uint256',
+            name: 'weiStaked',
+            type: 'uint256',
+          },
+          {
+            internalType: 'uint256',
+            name: 'weiInterest',
+            type: 'uint256',
+          },
+          {
+            internalType: 'bool',
+            name: 'open',
+            type: 'bool',
+          },
+        ],
+        internalType: 'struct Staking.Position',
         name: '',
-        type: 'uint256[]',
+        type: 'tuple',
       },
     ],
     stateMutability: 'view',
@@ -147,17 +196,17 @@ export const ABI = [
   {
     inputs: [
       {
-        internalType: 'uint256',
-        name: '',
-        type: 'uint256',
+        internalType: 'address',
+        name: 'walletAddress',
+        type: 'address',
       },
     ],
-    name: 'lockPeriods',
+    name: 'getPositionsIdsByAddress',
     outputs: [
       {
-        internalType: 'uint256',
+        internalType: 'uint256[]',
         name: '',
-        type: 'uint256',
+        type: 'uint256[]',
       },
     ],
     stateMutability: 'view',
@@ -177,110 +226,13 @@ export const ABI = [
     type: 'function',
   },
   {
-    inputs: [
+    inputs: [],
+    name: 'rewardPool',
+    outputs: [
       {
-        internalType: 'address',
+        internalType: 'contract RewardPool',
         name: '',
         type: 'address',
-      },
-      {
-        internalType: 'uint256',
-        name: '',
-        type: 'uint256',
-      },
-    ],
-    name: 'positionIdsByAddress',
-    outputs: [
-      {
-        internalType: 'uint256',
-        name: '',
-        type: 'uint256',
-      },
-    ],
-    stateMutability: 'view',
-    type: 'function',
-  },
-  {
-    inputs: [
-      {
-        internalType: 'uint256',
-        name: '',
-        type: 'uint256',
-      },
-    ],
-    name: 'positions',
-    outputs: [
-      {
-        internalType: 'uint256',
-        name: 'positionId',
-        type: 'uint256',
-      },
-      {
-        internalType: 'address',
-        name: 'walletAddress',
-        type: 'address',
-      },
-      {
-        internalType: 'uint256',
-        name: 'createdDate',
-        type: 'uint256',
-      },
-      {
-        internalType: 'uint256',
-        name: 'unlockDate',
-        type: 'uint256',
-      },
-      {
-        internalType: 'uint256',
-        name: 'percentInterest',
-        type: 'uint256',
-      },
-      {
-        internalType: 'uint256',
-        name: 'weiStaked',
-        type: 'uint256',
-      },
-      {
-        internalType: 'uint256',
-        name: 'weiInterest',
-        type: 'uint256',
-      },
-      {
-        internalType: 'bool',
-        name: 'open',
-        type: 'bool',
-      },
-    ],
-    stateMutability: 'view',
-    type: 'function',
-  },
-  {
-    inputs: [
-      {
-        internalType: 'uint256',
-        name: 'numDays',
-        type: 'uint256',
-      },
-    ],
-    name: 'stakeEther',
-    outputs: [],
-    stateMutability: 'payable',
-    type: 'function',
-  },
-  {
-    inputs: [
-      {
-        internalType: 'uint256',
-        name: '',
-        type: 'uint256',
-      },
-    ],
-    name: 'tiers',
-    outputs: [
-      {
-        internalType: 'uint256',
-        name: '',
-        type: 'uint256',
       },
     ],
     stateMutability: 'view',

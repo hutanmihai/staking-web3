@@ -9,134 +9,99 @@ import { useAccount, useReadContract, useReadContracts, useWriteContract } from 
 import { CONTRACT_ADDRESS, ABI } from '@/config'
 
 function Staking() {
-  const { address, status, addresses, chainId, chain } = useAccount()
+  const { address } = useAccount()
 
-  const [isStakeTabOpen, setIsStakeTabOpen] = useState(true)
-  const [unstakeValue, setUnstakeValue] = useState(0)
-
-  const [assets, setAssets] = useState([])
+  const [positions, setPositions] = useState<any[]>([])
   const [amount, setAmount] = useState<number>(0)
-  const { writeContract } = useWriteContract()
+  const { writeContractAsync } = useWriteContract()
 
-  const {
-    data: assetsIds,
-    isSuccess: assetsIdsFetched,
-    isPending,
-  } = useReadContract({
+  const { data: positionsIds, isSuccess: positionsIdsFetched } = useReadContract({
     abi: ABI,
     address: CONTRACT_ADDRESS,
-    functionName: 'getPositionIdsByAddress',
+    functionName: 'getPositionsIdsByAddress',
     args: [address!],
     query: {
       enabled: !!address,
     },
   })
 
-  const contractsConfig = assetsIdsFetched
-    ? assetsIds.map((id) => ({
+  const contractsConfig = positionsIdsFetched
+    ? positionsIds.map((id) => ({
         address: CONTRACT_ADDRESS,
         abi: ABI,
-        functionName: 'positions',
+        functionName: 'getPositionById',
         args: [id],
       }))
     : []
 
-  const { data: contracts } = useReadContracts({
+  const { data } = useReadContracts({
     // @ts-ignore
     contracts: contractsConfig,
     query: {
-      enabled: assetsIdsFetched && contractsConfig.length > 0,
+      enabled: positionsIdsFetched && contractsConfig.length > 0,
     },
   })
 
   useEffect(() => {
-    const newAssets = contracts?.map((contract: any) => ({
-      positionId: contract.result[0],
-      address: contract.result[1],
-      createdDate: contract.result[2],
-      unlockDate: contract.result[3],
-      percentInterest: contract.result[4],
-      weiStaked: contract.result[5],
-      weiInterest: contract.result[6],
-      open: contract.result[7],
+    const _positions = data?.map((contract: any) => ({
+      positionId: contract.result.positionId,
+      address: contract.result.walletAddress,
+      createdDate: contract.result.createdDate,
+      unlockDate: contract.result.unlockDate,
+      percentInterest: contract.result.percentInterest,
+      weiStaked: contract.result.weiStaked,
+      weiInterest: contract.result.weiInterest,
+      open: contract.result.open,
     }))
-    setAssets(newAssets)
-  }, [contracts])
+    // @ts-ignore
+    setPositions(_positions)
+  }, [data])
 
-  const stakeEther = (stakingLength: number) => {
+  const stakeEther = async (stakingLength: number) => {
     const wei = toWei(amount.toString())
-    writeContract({
+    console.log('wei', wei)
+    console.log('stakingLength', stakingLength.toString())
+    await writeContractAsync({
       address: CONTRACT_ADDRESS,
       functionName: 'stakeEther',
-      args: [BigInt(stakingLength)],
+      // @ts-ignore
+      args: [stakingLength.toString()],
       abi: ABI,
       value: wei,
     })
   }
 
-  const withDraw = (positionId: string) => {
-    writeContract({
+  const withDraw = async (id: bigint) => {
+    await writeContractAsync({
       address: CONTRACT_ADDRESS,
       functionName: 'closePosition',
-      args: [BigInt(positionId)],
+      args: [id],
       abi: ABI,
     })
   }
 
-  const toggleStakeTab = () => {
-    setIsStakeTabOpen((prev) => !prev)
-  }
-
-  if (isPending) {
-    return <p>Loading...</p>
-  }
+  useEffect(() => {
+    console.log('positionsIds', positionsIds)
+    console.log('positions', positions)
+    console.log('data', data)
+  }, [amount, positions])
 
   return (
-    <div>
-      <h1>
-        Status: {status}
-        <br />
-        Addresses: {JSON.stringify(addresses)}
-        <br />
-        Chain: {JSON.stringify(chain)}
-        <br />
-        chainId: {chainId}
-      </h1>
-      {isStakeTabOpen ? (
-        <Card className="bg-black">
-          <CardHeader>
-            <Button onClick={toggleStakeTab} variant="secondary">
-              {isStakeTabOpen ? 'Unstake' : 'Stake'}
-            </Button>
-          </CardHeader>
-          <CardContent>
-            <Input
-              onChange={(e) => setAmount(Number(e.target.value))}
-              maxLength={120}
-              type="number"
-              placeholder="Amount to stake"
-              required
-            />
-            <Button className="mt-2 w-full" onClick={() => stakeEther(5184000)}>
-              Stake
-            </Button>
-          </CardContent>
-        </Card>
-      ) : (
-        <Card className="bg-black">
-          <CardHeader>
-            <Button onClick={toggleStakeTab} variant="secondary">
-              {isStakeTabOpen ? 'Unstake' : 'Stake'}
-            </Button>
-          </CardHeader>
-          <CardContent>
-            <Button className="mt-2 w-full" onClick={() => console.log('Unstake Clicked!')}>
-              Unstake
-            </Button>
-          </CardContent>
-        </Card>
-      )}
-    </div>
+    <Card className="h-max bg-black text-center">
+      <CardHeader>Staking</CardHeader>
+      <CardContent>
+        <Input
+          onChange={(e) => setAmount(Number(e.target.value))}
+          maxLength={120}
+          type="number"
+          placeholder="Amount to stake"
+          required
+        />
+        <Button className="mt-2 w-full" onClick={() => stakeEther(60)}>
+          Stake
+        </Button>
+      </CardContent>
+    </Card>
   )
 }
 

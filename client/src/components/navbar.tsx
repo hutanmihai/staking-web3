@@ -9,14 +9,13 @@ function Navbar() {
   const account = useAccount()
   const { connect, connectors } = useConnect()
   const { disconnect } = useDisconnect()
-  const balance = useBalance(account)
 
   return (
     <nav className="sticky inset-x-0 top-0 z-30 h-14 w-full border-b border-zinc-700 bg-black/75 backdrop-blur-lg transition-all">
       <MaxWidthWrapper>
         <div className="flex h-14 items-center justify-between border-b border-zinc-700">
           <Link href="/" className="z-40 flex font-semibold">
-            StakingApp.
+            RebWeb3.
           </Link>
 
           <div className="hidden items-center space-x-4 sm:flex">
@@ -29,10 +28,7 @@ function Navbar() {
                 ))}
               </>
             ) : (
-              <div className="flex items-center gap-4">
-                <Button onClick={() => disconnect()}>DISCONNECT WALLET</Button>
-                <p>Balance: {balance?.data?.formatted}</p>
-              </div>
+              <Button onClick={() => disconnect()}>DISCONNECT WALLET</Button>
             )}
           </div>
         </div>

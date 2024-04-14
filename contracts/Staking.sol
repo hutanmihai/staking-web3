@@ -19,10 +19,10 @@ contract Staking {
 
     uint public currentPositionId;
     RewardPool public rewardPool;
-    mapping(uint => Position) public positions;
-    mapping(address => uint[]) public positionIdsByAddress;
-    mapping(uint => uint) public tiers;
-    uint[] public lockPeriods;
+    mapping(uint => Position) private positions;
+    mapping(address => uint[]) private positionsIdsByAddress;
+    mapping(uint => uint) private tiers;
+    uint[] private lockPeriods;
 
     event Staked(address indexed staker, uint positionId, uint weiAmount, uint interestRate, uint unlockDate);
     event Closed(address indexed staker, uint positionId, uint returnedAmount);
@@ -31,10 +31,10 @@ contract Staking {
         owner = msg.sender;
         currentPositionId = 0;
 
-        lockPeriods = [30 days, 60 days, 90 days];
-        tiers[30 days] = 60;
-        tiers[60 days] = 70;
-        tiers[90 days] = 80;
+        lockPeriods = [1 minutes, 2 minutes, 3 minutes];
+        tiers[1 minutes] = 60;
+        tiers[2 minutes] = 70;
+        tiers[3 minutes] = 80;
     }
 
     modifier onlyOwner() {
@@ -49,33 +49,32 @@ contract Staking {
         _;
     }
 
-    function stakeEther(uint numDays) external payable {
-        require(tiers[numDays] > 0, "Invalid number of days");
+    function setRewardPool(address payable _rewardPool) external onlyOwner {
+        rewardPool = RewardPool(_rewardPool);
+    }
+
+    function stakeEther(uint numSeconds) external payable {
+        require(tiers[numSeconds] > 0, "Invalid number of days");
         require(msg.value > 0, "Must send ether to stake");
 
-        uint unlockDate = block.timestamp + numDays * 1 days;
-        uint interest = calculateInterest(msg.value, tiers[numDays]);
+        uint unlockDate = block.timestamp + numSeconds;
+        uint interest = calculateInterest(msg.value, tiers[numSeconds]);
 
         positions[currentPositionId] = Position(
             currentPositionId,
             msg.sender,
             block.timestamp,
             unlockDate,
-            tiers[numDays],
+            tiers[numSeconds],
             msg.value,
             interest,
             true
         );
 
-        positionIdsByAddress[msg.sender].push(currentPositionId);
+        positionsIdsByAddress[msg.sender].push(currentPositionId);
 
-        emit Staked(msg.sender, currentPositionId, msg.value, tiers[numDays], unlockDate);
+        emit Staked(msg.sender, currentPositionId, msg.value, tiers[numSeconds], unlockDate);
         currentPositionId++;
-    }
-
-
-    function setRewardPool(address payable _rewardPool) external onlyOwner {
-        rewardPool = RewardPool(_rewardPool);
     }
 
     function closePosition(uint positionId) external canClosePosition(positionId) {
@@ -91,5 +90,17 @@ contract Staking {
 
     function calculateInterest(uint weiAmount, uint basisPoints) private pure returns (uint) {
         return (weiAmount * basisPoints) / 10000;
+    }
+
+    function getPositionsIdsByAddress(address walletAddress) external view returns (uint[] memory) {
+        return positionsIdsByAddress[walletAddress];
+    }
+
+    function getPositionById(uint positionId) external view returns (Position memory) {
+        return positions[positionId];
+    }
+
+    function getLockPeriods() external view returns (uint[] memory) {
+        return lockPeriods;
     }
 }
