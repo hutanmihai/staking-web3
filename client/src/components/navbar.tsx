@@ -15,7 +15,7 @@ function Navbar() {
       <MaxWidthWrapper>
         <div className="flex h-14 items-center justify-between border-b border-zinc-700">
           <Link href="/" className="z-40 flex font-semibold">
-            RebWeb3.
+            StakingWeb3.
           </Link>
 
           <div className="hidden items-center space-x-4 sm:flex">

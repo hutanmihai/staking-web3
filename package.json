@@ -13,6 +13,7 @@
     "@types/node": "^20.12.5",
     "chai": "^4.4.1",
     "hardhat": "^2.22.2",
+    "hardhat-gas-reporter": "^2.1.1",
     "ts-node": "^10.9.2",
     "typescript": "^5.4.4"
   }
